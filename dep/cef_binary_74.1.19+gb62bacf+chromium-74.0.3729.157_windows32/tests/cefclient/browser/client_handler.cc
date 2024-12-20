@@ -26,6 +26,7 @@
 
 // winsoft666: [update-cefclient] header files.
 #include "v8_handler_impl.h"
+#include "root_window_qt.h"
 
 namespace client {
 
@@ -563,9 +564,13 @@ bool ClientHandler::OnBeforePopup(
     bool* no_javascript_access) {
   CEF_REQUIRE_UI_THREAD();
 
+  // winsoft666: [update-cefclient] Only allow devtools popup window.
+  MAIN_POST_CLOSURE(base::Bind(&ClientHandler::NotifyNewPopupWindow, this, browser, target_url));
+  return true; // Return true to cancel the popup window.
+
   // Return true to cancel the popup window.
-  return !CreatePopupWindow(browser, false, popupFeatures, windowInfo, client,
-                            settings);
+  //return !CreatePopupWindow(browser, false, popupFeatures, windowInfo, client,
+  //                          settings);
 }
 
 void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
@@ -953,12 +958,12 @@ bool ClientHandler::CreatePopupWindow(CefRefPtr<CefBrowser> browser,
                                       CefBrowserSettings& settings) {
   CEF_REQUIRE_UI_THREAD();
 
-  // The popup browser will be parented to a new native window.
-  // Don't show URL bar and navigation buttons on DevTools windows.
-  MainContext::Get()->GetRootWindowManager()->CreateRootWindowAsPopup(
-      !is_devtools, is_osr(), popupFeatures, windowInfo, client, settings);
+    // The popup browser will be parented to a new native window.
+    // Don't show URL bar and navigation buttons on DevTools windows.
+    MainContext::Get()->GetRootWindowManager()->CreateRootWindowAsPopup(
+        !is_devtools, is_osr(), popupFeatures, windowInfo, client, settings);
 
-  return true;
+    return true;
 }
 
 void ClientHandler::NotifyBrowserCreated(CefRefPtr<CefBrowser> browser) {
@@ -1129,4 +1134,11 @@ bool ClientHandler::ExecuteTestMenu(int command_id) {
   return false;
 }
 
+// winsoft666: [update-cefclient] Run on main thread
+void ClientHandler::NotifyNewPopupWindow(CefRefPtr<CefBrowser> browser, std::string url) {
+  RootWindowQt * rootWin =(RootWindowQt*)(MainContext::Get()->GetRootWindowManager()->GetWindowForBrowser(browser->GetIdentifier()).get());
+  if (rootWin) {
+      rootWin->OnPopupWindow(url);
+  }
+}
 }  // namespace client

@@ -317,6 +317,9 @@ class ClientHandler : public CefClient,
   void BuildTestMenu(CefRefPtr<CefMenuModel> model);
   bool ExecuteTestMenu(int command_id);
 
+  // winsoft666: [update-cefclient] Run on main thread
+  void NotifyNewPopupWindow(CefRefPtr<CefBrowser> browser, std::string url);
+
   // THREAD SAFE MEMBERS
   // The following members may be accessed from any thread.
 

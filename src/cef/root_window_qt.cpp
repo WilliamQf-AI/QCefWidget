@@ -18,6 +18,7 @@
 #include <QTimer>
 #include <QDebug>
 #include "QWebView/Manager.h"
+#include "QWebView/ManagerPrivate.h"
 
 namespace client {
 PopupWidget::PopupWidget(RootWindowQt* w, QWidget* parent /*= nullptr*/) :
@@ -27,8 +28,14 @@ PopupWidget::PopupWidget(RootWindowQt* w, QWidget* parent /*= nullptr*/) :
   this->installEventFilter(this);
 }
 
+void PopupWidget::OnWindowAndBrowserDestoryed() {
+  root_win_ = nullptr;
+}
+
 bool PopupWidget::eventFilter(QObject* obj, QEvent* e) {
-  return root_win_->eventFilter(obj, e);
+  if (root_win_)
+    return root_win_->eventFilter(obj, e);
+  return QWidget::eventFilter(obj, e);
 }
 
 RootWindowQt::RootWindowQt() {
@@ -225,6 +232,13 @@ void RootWindowQt::OnReceiveJsNotify(const std::string& message) {
   }
 }
 
+void RootWindowQt::OnPopupWindow(const std::string& url) {
+  if (widget_) {
+    QWebView* webview = (QWebView*)widget_.data();
+    emit webview->newPopupWindow(QString::fromStdString(url));
+  }
+}
+
 bool RootWindowQt::isAllowBrowserClose() {
   return true;
 }
@@ -291,7 +305,9 @@ void RootWindowQt::CreateRootWindow(const CefBrowserSettings& settings,
   }
   else {
     // 临时窗口未指定QWidget，需要自动创建
+    // 仅允许DevTools弹窗
     widget_ = new PopupWidget(this);
+    widget_->installEventFilter(this);
   }
 
   QWidget* window = widget_->window();
@@ -416,7 +432,7 @@ bool RootWindowQt::OnClose() {
       if (browser) {
         qDebug() << ">>>> Call GetHost()->CloseBrowser(false)";
 
-        QWebViewManager::Get()->setWebViewClosed(nullptr, (QWebView*)widget_.data());
+        QWebViewManager::Get()->privatePointer()->setWebViewClosed(nullptr, (QWebView*)widget_.data());
 
         // Notify the browser window that we would like to close it. This
         // will result in a call to ClientHandler::DoClose() if the
@@ -426,7 +442,7 @@ bool RootWindowQt::OnClose() {
         // 在非OSR模式下，调用browser->GetHost()->CloseBrowser(false)后，CEF会向顶级窗口发送WM_CLOSE消息
         // 而在非OSR模式下，则不会发送WM_CLOSE消息，因此在此处模拟发送该消息，保持两种模式下的退出流程一致
         if (with_osr_) {
-          QWebViewManager::Get()->sendCloseEventToTopLevel((QWebView*)widget_.data());
+          QWebViewManager::Get()->privatePointer()->sendCloseEventToTopLevel((QWebView*)widget_.data());
         }
 
         // Cancel the close.
@@ -543,8 +559,16 @@ void RootWindowQt::NotifyDestroyedIfDone() {
 
   // Notify once both the window and the browser have been destroyed.
   if (window_destroyed_ && browser_destroyed_) {
-    qDebug() << ">>>> Notify Browser/Window all destoryed";
-    root_win_qt_delegate_->OnWindowAndBrowserDestoryed();
+    if (is_popup_) {
+      PopupWidget* popupWidget = (PopupWidget*)widget_.data();
+      if (popupWidget)
+        popupWidget->OnWindowAndBrowserDestoryed();
+    }
+
+    if (root_win_qt_delegate_) {
+      qDebug() << ">>>> Notify Browser/Window all destoryed";
+      root_win_qt_delegate_->OnWindowAndBrowserDestoryed();
+    }
 
     qDebug() << ">>>> OnRootWindowDestroyed";
     delegate_->OnRootWindowDestroyed(this);  // 调用该语句会使当前RootWindowQt对象被销毁

@@ -26,6 +26,7 @@
 #include <QApplication>
 #include "QWebView/Manager.h"
 #include "QWebView/Creator.h"
+#include "QWebView/ManagerPrivate.h"
 
 using namespace client;
 
@@ -112,7 +113,7 @@ class QWebViewCEF::Impl : public QObject, public RootWindowQt::Delegate {
   }
 
   void OnBrowserCreated() override {
-    QWebViewManager::Get()->add(parent_);
+    QWebViewManager::Get()->privatePointer()->add(parent_);
   }
 
   void OnWindowDestoryed() override {
@@ -121,7 +122,7 @@ class QWebViewCEF::Impl : public QObject, public RootWindowQt::Delegate {
 
   void OnWindowAndBrowserDestoryed() override {
     rootWindow_ = nullptr;
-    QWebViewManager::Get()->remove(parent_);
+    QWebViewManager::Get()->privatePointer()->remove(parent_);
   }
 
  private:
@@ -141,10 +142,6 @@ QWebViewCEF::QWebViewCEF(QWidget* parent) :
 
 QWebViewCEF::~QWebViewCEF() {
   qDebug() << ">>>> QWebViewCEF Dtor";
-}
-
-QWebView::BrowserEngine QWebViewCEF::browserEngine() const {
-  return engine_;
 }
 
 void QWebViewCEF::navigate(const QString& url) {

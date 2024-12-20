@@ -13,7 +13,9 @@
 #include "wil/com.h"
 #include "WebView2.h"
 #include "QWebView/Manager.h"
+#include "QWebView/ManagerPrivate.h"
 #include "QWebView/Creator.h"
+#include <QHBoxLayout>
 
 bool QWebViewWebView2::QueryWebView2Version(QString& version) {
   wil::unique_cotaskmem_string versionInfo;
@@ -43,10 +45,6 @@ QWebViewWebView2::~QWebViewWebView2() {
   qDebug() << ">>>> QWebViewWebView2 Dtor";
 }
 
-QWebView::BrowserEngine QWebViewWebView2::browserEngine() const {
-  return engine_;
-}
-
 void QWebViewWebView2::navigate(const QString& url) {
   if (!impl_->IsInitialized()) {
     HRESULT hr = impl_->InitializeWebView();
@@ -54,7 +52,7 @@ void QWebViewWebView2::navigate(const QString& url) {
       ShowFailure(hr, L"Initialize WebView2 failed");
     }
     else {
-      QWebViewManager::Get()->add(this);
+      QWebViewManager::Get()->privatePointer()->add(this);
     }
   }
 
@@ -118,6 +116,68 @@ bool QWebViewWebView2::postMessage(const QString& message) {
   CHECK_FAILURE(hr);
 
   return SUCCEEDED(hr);
+}
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+bool QWebViewWebView2::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
+#else
+bool QWebViewWebView2::nativeEvent(const QByteArray& eventType, void* message, long* result) {
+#endif
+  if (eventType == "windows_generic_MSG") {
+    MSG* pMsg = (MSG*)message;
+    if (!pMsg) {
+      return false;
+    }
+
+    HWND hWnd = pMsg->hwnd;
+    UINT message = pMsg->message;
+    DWORD wParam = pMsg->wParam;
+    DWORD lParam = pMsg->lParam;
+
+    // Give all components a chance to handle the message first.
+    LRESULT lret = 0;
+    if (impl_->ComponentsHandleWindowMessage(hWnd, message, wParam, lParam, &lret)) {
+      return false;
+    }
+
+    switch (message) {
+      case WM_SIZE: {
+        // Don't resize the app or webview when the app is minimized, let WM_SYSCOMMAND to handle it
+        if (lParam != 0) {
+          impl_->ResizeEverything(LOWORD(lParam), HIWORD(lParam));
+        }
+        break;
+      }
+      case WM_DPICHANGED: {
+        if (auto view = impl_->GetComponent<ViewComponent>()) {
+          view->UpdateDpiAndTextScale();
+        }
+
+        RECT* const newWindowSize = reinterpret_cast<RECT*>(lParam);
+        SetWindowPos(
+            hWnd, nullptr, newWindowSize->left, newWindowSize->top,
+            newWindowSize->right - newWindowSize->left,
+            newWindowSize->bottom - newWindowSize->top, SWP_NOZORDER | SWP_NOACTIVATE);
+        return true;
+      }
+      case WUM_ASYNC_TASK:
+        auto* task = reinterpret_cast<std::function<void()>*>(wParam);
+        (*task)();
+        delete task;
+        return true;
+    }
+    return false;
+  }
+  return false;
+}
+
+void QWebViewWebView2::closeEvent(QCloseEvent* e) {
+  impl_->UninitializeWebView();
+  QWebView::closeEvent(e);
+}
+
+void QWebViewWebView2::onNewWindow(QString url) {
+  emit newPopupWindow(url);
 }
 
 QWebView* CreateWebView2(QWidget* parent) {

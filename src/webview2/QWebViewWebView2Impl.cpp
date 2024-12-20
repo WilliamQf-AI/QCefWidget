@@ -5,6 +5,7 @@
 #include <DispatcherQueue.h>
 #include <QDebug>
 #include <WebView2EnvironmentOptions.h>
+#include "qwebview.webview2.h"
 
 using namespace Microsoft::WRL;
 
@@ -410,7 +411,12 @@ void QWebViewWebView2Impl::RegisterEventHandlers() {
   CHECK_FAILURE(m_webView->add_NewWindowRequested(
       Callback<ICoreWebView2NewWindowRequestedEventHandler>(
           [this](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) {
-            args->put_Handled(FALSE);
+            wil::unique_cotaskmem_string url;
+            HRESULT hr = args->get_Uri(&url);
+            if (SUCCEEDED(hr)) {
+              host_->onNewWindow(QString::fromStdWString(url.get()));
+            }
+            args->put_Handled(TRUE);
             return S_OK;
           })
           .Get(),

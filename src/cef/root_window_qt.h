@@ -23,6 +23,7 @@ class PopupWidget : public QWidget {
  public:
   PopupWidget(RootWindowQt* w, QWidget* parent = nullptr);
 
+  void OnWindowAndBrowserDestoryed();
  protected:
   bool eventFilter(QObject* obj, QEvent* e) OVERRIDE;
 
@@ -76,6 +77,7 @@ class RootWindowQt : public RootWindow, public BrowserWindow::Delegate, public Q
   void CloseDevTools();
 
   void OnReceiveJsNotify(const std::string& message);
+  void OnPopupWindow(const std::string& url);
 
   inline void SetDelegate(RootWindowQt::Delegate* delgate) {
     root_win_qt_delegate_ = delgate;
@@ -136,7 +138,7 @@ class RootWindowQt : public RootWindow, public BrowserWindow::Delegate, public Q
   bool window_destroyed_ = false;
   bool browser_destroyed_ = false;
 
-  std::string one_time_url_;   // 一次性URL，记录在Browser创建之前用户设置的URL，延后到Browser创建后设置该URL
+  std::string one_time_url_;  // 一次性URL，记录在Browser创建之前用户设置的URL，延后到Browser创建后设置该URL
   RootWindowQt::Delegate* root_win_qt_delegate_ = nullptr;
   bool force_close_root_win_ = false;
 

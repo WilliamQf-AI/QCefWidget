@@ -65,7 +65,6 @@ target_include_directories(QWebView.CEF PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CEF_ROOT}
   ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/src/qwebview
 )
 
 target_link_libraries(QWebView.CEF 

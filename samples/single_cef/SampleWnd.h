@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <QtWidgets>
 #include <QDebug>
+#include "QWebView/Manager.h"
 
 #pragma execution_character_set("utf-8")
 
@@ -20,6 +21,10 @@ class SampleWnd : public QWidget {
   //}
 
   void closeEvent(QCloseEvent* e);
+
+ private slots:
+  void onNewPopupWindow(QString url);
+
  protected:
   QWebView* webview_ = nullptr;
 };

@@ -20,7 +20,9 @@ endif()
 
 add_library(QWebView.Manager SHARED 
   ${CMAKE_SOURCE_DIR}/include/QWebView/Manager.h
+  ${CMAKE_SOURCE_DIR}/include/QWebView/ManagerPrivate.h
   manager.cpp
+  manager_private.cpp
   top_level_window_util.h
   top_level_window_util.cpp
   ${WIN_RES}

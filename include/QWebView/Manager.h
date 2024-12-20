@@ -10,9 +10,6 @@
 #pragma once
 
 #include <QObject>
-#include <QSet>
-#include <QMap>
-#include <QVector>
 #include <QDebug>
 #include "QWebView/Core.h"
 #include <QtCore/qglobal.h>
@@ -24,6 +21,9 @@
 #define QWEBVIEW_MANAGER_EXPORT Q_DECL_IMPORT
 #endif
 #endif
+
+class QWebViewManagerPrivate;
+
 
 // 虽然WebView2内核在关闭时无需特殊的处理流程，但为了使WebView2和CEF有相同的使用流程，仍然统一使用QWebViewManager进行管理
 //
@@ -37,43 +37,27 @@ class QWEBVIEW_MANAGER_EXPORT QWebViewManager : public QObject {
     Closed = 3
   };
 
-  struct WebViewData {
-    QWebView* WebView = nullptr;
-    bool BrowserClosed = false;
-  };
-
-  struct TopLevelWndData {
-    TopLevelWndCloseState CloseState = TopLevelWndCloseState::NotStart;
-    QVector<WebViewData> WebviewColl;
-  };
-
   static QWebViewManager* Get();
 
   TopLevelWndCloseState topLevelWinCloseState(QWidget* topLevel) const;
 
-  void setCefCanUnInitialize();
-  void setWebViewClosed(QWidget* topLevel, QWebView* webview);
-  void sendCloseEventToTopLevel(QWebView* webview);
- signals:
-  void allWebViewsClosed();
+  QWebViewManagerPrivate* privatePointer();
 
  public slots:
   void prepareToCloseTopLevelWindow(QWidget* topLevel);
-  void add(QWebView* webview);
-  void remove(QWebView* webview);
+
+ signals:
+  void allWebViewsClosed();
 
  protected:
   bool eventFilter(QObject* obj, QEvent* e) override;
-  void checkBrowsersCloseState(QWidget* topLevel);
-  void checkAllWebViewsClosed();
 
  protected:
   QWebViewManager(QObject* parent = Q_NULLPTR);
   ~QWebViewManager();
 
-  bool cefCanUnInitialize_ = true;
-  QMap<QWidget*, TopLevelWndData> topLevelDataMap_;
+  std::unique_ptr<QWebViewManagerPrivate> d_;
 };
 
 QWEBVIEW_MANAGER_EXPORT QDebug operator<<(QDebug debug, QWebViewManager::TopLevelWndCloseState state);
-#endif // !QWEBVIEW_MANAGER_H_
+#endif  // !QWEBVIEW_MANAGER_H_

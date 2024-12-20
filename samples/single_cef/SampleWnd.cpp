@@ -1,11 +1,13 @@
 ﻿#include "SampleWnd.h"
 #include "QWebView/Creator.h"
-#include "QWebView/Manager.h"
+#include "PopupWnd.h"
 
 SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
     QWidget(parent) {
   webview_ = CreateCEF();
   webview_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+  connect(webview_, &QWebView::newPopupWindow, this, &SampleWnd::onNewPopupWindow);
 
   QPushButton* btnClose = new QPushButton("调用QWidget::close()");
   connect(btnClose, &QPushButton::clicked, this, [this]() {
@@ -61,4 +63,10 @@ void SampleWnd::closeEvent(QCloseEvent* e) {
   else if (state == QWebViewManager::TopLevelWndCloseState::Closed) {
     Q_UNREACHABLE();
   }
+}
+
+void SampleWnd::onNewPopupWindow(QString url) {
+    PopupWnd* popupWnd = new PopupWnd(url);
+    popupWnd->resize(800, 600);
+    popupWnd->show();
 }

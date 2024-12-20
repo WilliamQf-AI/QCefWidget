@@ -9,10 +9,11 @@
 #define QWEBVIEW_CORE_H_
 #pragma once
 
+#include <QtCore/qglobal.h>
 #include <QWidget>
 #include <QString>
 #include <QFlags>
-#include <QtCore/qglobal.h>
+#include <QDebug>
 
 #ifndef QWEBVIEW_CORE_EXPORT
 #ifdef QWEBVIEW_CORE_LIB
@@ -34,7 +35,7 @@ class QWEBVIEW_CORE_EXPORT QWebView : public QWidget {
 
   QWebView(QWidget* parent = Q_NULLPTR);
 
-  virtual BrowserEngine browserEngine() const = 0;
+  virtual BrowserEngine browserEngine() const;
 
   virtual void navigate(const QString& url) = 0;
 
@@ -63,6 +64,7 @@ class QWEBVIEW_CORE_EXPORT QWebView : public QWidget {
   void urlChanged(const QString& url);
   void loadStateChanged(bool isLoading);
   void fullscreenChanged(bool fullscreen);
+  void newPopupWindow(const QString& url);
   void messageReceived(const QString& message);
 
  protected:
@@ -70,5 +72,7 @@ class QWEBVIEW_CORE_EXPORT QWebView : public QWidget {
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QWebView::BrowserEngines)
+
+QWEBVIEW_CORE_EXPORT QDebug operator<<(QDebug debug, QWebView::BrowserEngine engine);
 
 #endif  // !QWEBVIEW_CORE_H_

@@ -2,6 +2,7 @@
 #include "include/cef_app.h"
 #include <QApplication>
 #include "QWebView/Manager.h"
+#include "QWebView/ManagerPrivate.h"
 
 MainMessageLoopQt::MainMessageLoopQt() :
     thread_id_(base::PlatformThread::CurrentId()) {
@@ -17,7 +18,7 @@ void MainMessageLoopQt::Quit() {
   //  return;
   //}
 
-  QWebViewManager::Get()->setCefCanUnInitialize();
+  QWebViewManager::Get()->privatePointer()->setCefCanUnInitialize();
 }
 
 void MainMessageLoopQt::PostTask(CefRefPtr<CefTask> task) {

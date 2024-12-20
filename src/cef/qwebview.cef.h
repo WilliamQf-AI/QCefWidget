@@ -37,8 +37,6 @@ class QWEBVIEW_CEF_EXPORT QWebViewCEF : public QWebView {
   QWebViewCEF(QWidget* parent = nullptr);
   virtual ~QWebViewCEF();
 
-  virtual BrowserEngine browserEngine() const override;
-
   virtual void navigate(const QString& url) override;
 
   virtual bool canGoBack() override;

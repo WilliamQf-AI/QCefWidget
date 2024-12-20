@@ -28,8 +28,6 @@ class QWEBVIEW_WEBVIEW2_EXPORT QWebViewWebView2 : public QWebView {
   QWebViewWebView2(QWidget* parent = Q_NULLPTR);
   virtual ~QWebViewWebView2();
 
-  virtual BrowserEngine browserEngine() const override;
-
   virtual void navigate(const QString& url) override;
 
   virtual bool canGoBack() override;
@@ -53,13 +51,25 @@ class QWEBVIEW_WEBVIEW2_EXPORT QWebViewWebView2 : public QWebView {
   virtual bool postMessage(const QString& message) override;
 
  Q_SIGNALS:
-
   void profileDeleted();
 
   void acceleratorKeyPressed(unsigned int key);
 
+ protected:
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+  bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+#else
+  bool nativeEvent(const QByteArray& eventType, void* message, long* result) override;
+#endif
+
+  void closeEvent(QCloseEvent* e) override;
+
+ private:
+  void onNewWindow(QString url);
+
  private:
   std::unique_ptr<QWebViewWebView2Impl> impl_;
+  friend class QWebViewWebView2Impl;
 };
 
 #endif  // !QWEBVIEW_WEBVIEW2_H_

@@ -75,7 +75,6 @@ target_compile_definitions(QWebView.WebView2 PRIVATE
 target_include_directories(QWebView.WebView2 PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/src/qwebview
   ../3rd/Microsoft.Web.WebView2.1.0.2651.64/build/native/include
   ../3rd/Microsoft.Windows.ImplementationLibrary.1.0.240803.1/include/
 )

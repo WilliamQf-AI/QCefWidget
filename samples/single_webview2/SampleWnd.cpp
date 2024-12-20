@@ -1,11 +1,15 @@
 ﻿#include "SampleWnd.h"
 #include "QWebView/Creator.h"
 #include "QWebView/Manager.h"
+#include "PopupWnd.h"
 
 SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
     QWidget(parent) {
   webview_ = CreateWebView2();
   webview_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+  connect(webview_, &QWebView::newPopupWindow, this, &SampleWnd::onNewPopupWindow);
+
   connect(webview_, &QWebView::titleChanged, this, [this](QString title) {
     setWindowTitle(title);
   });
@@ -58,4 +62,10 @@ void SampleWnd::closeEvent(QCloseEvent* e) {
   else if (state == QWebViewManager::TopLevelWndCloseState::Closed) {
     Q_UNREACHABLE();
   }
+}
+
+void SampleWnd::onNewPopupWindow(QString url) {
+  PopupWnd* popupWnd = new PopupWnd(url);
+  popupWnd->resize(800, 600);
+  popupWnd->show();
 }
