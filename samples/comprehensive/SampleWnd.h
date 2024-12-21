@@ -45,8 +45,6 @@ class SampleWnd : public QWidget {
   QPushButton* pushButtonQuickSettingForElectron_;
 
   QListWidget* listBrowser_;
-
-  QLabel* labelVersion_;
 };
 
 #endif  // TEST_WND_H__

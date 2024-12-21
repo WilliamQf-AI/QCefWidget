@@ -2,14 +2,27 @@
 #include "QWebView/Core.h"
 #include "QWebView/Creator.h"
 #include "QWebView/Manager.h"
+#include "PopupWnd.h"
 
 SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
     QWidget(parent) {
   webviewLeft_ = CreateCEF();
   webviewLeft_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+  connect(webviewLeft_, &QWebView::newPopupWindow, this, &SampleWnd::onNewPopupWindow);
+
+  connect(webviewLeft_, &QWebView::messageReceived, this, [this](QString message) {
+    QMessageBox::information(this, "[WebView Left] Message from JavaSript", message, QMessageBox::Ok);
+  });
+
   webviewRight_ = CreateCEF();
   webviewRight_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+  connect(webviewRight_, &QWebView::newPopupWindow, this, &SampleWnd::onNewPopupWindow);
+
+  connect(webviewRight_, &QWebView::messageReceived, this, [this](QString message) {
+    QMessageBox::information(this, "[WebView Right] Message from JavaSript", message, QMessageBox::Ok);
+  });
 
   QPushButton* btnClose = new QPushButton("调用QWidget::close()");
   connect(btnClose, &QPushButton::clicked, this, [this]() {
@@ -47,8 +60,9 @@ SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
 
   setLayout(v);
 
-  webviewLeft_->navigate("https://www.baidu.com");
-  webviewRight_->navigate("https://www.baidu.com");
+  QString url = QString("file:///%1").arg(QCoreApplication::applicationDirPath() + u8"/asserts/test.html");
+  webviewLeft_->navigate(url);
+  webviewRight_->navigate(url);
 }
 
 void SampleWnd::closeEvent(QCloseEvent* e) {
@@ -73,4 +87,10 @@ void SampleWnd::closeEvent(QCloseEvent* e) {
   else if (state == QWebViewManager::TopLevelWndCloseState::Closed) {
     Q_UNREACHABLE();
   }
+}
+
+void SampleWnd::onNewPopupWindow(QString url) {
+  PopupWnd* popupWnd = new PopupWnd(url);
+  popupWnd->resize(800, 600);
+  popupWnd->show();
 }

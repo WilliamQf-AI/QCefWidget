@@ -50,6 +50,7 @@ class WebViewWnd : public WebViewWndBase<QWidget> {
  signals:
   void webViewWndVisibleChanged(bool bVisible);
   void webViewWndClosed();
+
  protected:
   QSize sizeHint() const override;
   void showEvent(QShowEvent* event) override;
@@ -61,10 +62,10 @@ class WebViewWnd : public WebViewWndBase<QWidget> {
   virtual void onShowDevTools();
   virtual void onCloseDevTools();
   virtual void onNotifyToJs();
-  virtual void onPopupWindow(const QString& url);
 
  private slots:
   void UpdateWindowTitle();
+  void onNewPopupWindow(QString url);
 
  protected:
   bool framelessWindow_;

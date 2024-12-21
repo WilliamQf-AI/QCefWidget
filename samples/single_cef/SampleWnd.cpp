@@ -5,9 +5,14 @@
 SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
     QWidget(parent) {
   webview_ = CreateCEF();
+  webview_->setOSREnabled(true);
   webview_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
   connect(webview_, &QWebView::newPopupWindow, this, &SampleWnd::onNewPopupWindow);
+
+  connect(webview_, &QWebView::messageReceived, this, [this](QString message) {
+    QMessageBox::information(this, "Message from JavaSript", message, QMessageBox::Ok);
+  });
 
   QPushButton* btnClose = new QPushButton("调用QWidget::close()");
   connect(btnClose, &QPushButton::clicked, this, [this]() {
@@ -38,7 +43,7 @@ SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
 
   setLayout(v);
 
-  webview_->navigate("https://www.baidu.com");
+  webview_->navigate(QString("file:///%1").arg(QCoreApplication::applicationDirPath() + u8"/asserts/test.html"));
 }
 
 void SampleWnd::closeEvent(QCloseEvent* e) {
@@ -66,7 +71,7 @@ void SampleWnd::closeEvent(QCloseEvent* e) {
 }
 
 void SampleWnd::onNewPopupWindow(QString url) {
-    PopupWnd* popupWnd = new PopupWnd(url);
-    popupWnd->resize(800, 600);
-    popupWnd->show();
+  PopupWnd* popupWnd = new PopupWnd(url);
+  popupWnd->resize(800, 600);
+  popupWnd->show();
 }

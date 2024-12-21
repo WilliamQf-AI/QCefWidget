@@ -20,6 +20,10 @@ class SampleWnd : public QWidget {
   //}
 
   void closeEvent(QCloseEvent* e);
+
+ private slots:
+  void onNewPopupWindow(QString url);
+
  protected:
   QWebView* webviewLeft_ = nullptr;
   QWebView* webviewRight_ = nullptr;

@@ -20,7 +20,5 @@ QWidget* GetTopLevelWindow(QWidget* w) {
     result = t;
   } while (true);
 
-
-
   return result;
 }

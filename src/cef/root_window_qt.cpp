@@ -19,20 +19,123 @@
 #include <QDebug>
 #include "QWebView/Manager.h"
 #include "QWebView/ManagerPrivate.h"
+#ifdef Q_OS_WIN
+#ifndef GET_X_LPARAM
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#endif  // !GET_X_LPARAM
+
+#ifndef GET_Y_LPARAM
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif  // !GET_Y_LPARAM
+#endif  // Q_OS_WIN
+
+#ifdef Q_OS_WIN
+namespace win_draggable_helper {
+
+LPCWSTR kParentWndProc = L"CefParentWndProc";
+LPCWSTR kDraggableRegion = L"CefDraggableRegion";
+
+HWND GetTopLevelWindow(HWND h) {
+  if (!h)
+    return nullptr;
+
+  HWND result = h;
+  do {
+    HWND p = GetParent(result);
+    if (!p)
+      break;
+    result = p;
+  } while (true);
+
+  return result;
+}
+
+LRESULT CALLBACK SubclassedWindowProc(HWND hWnd,
+                                      UINT message,
+                                      WPARAM wParam,
+                                      LPARAM lParam) {
+  WNDPROC hParentWndProc =
+      reinterpret_cast<WNDPROC>(::GetPropW(hWnd, kParentWndProc));
+  HRGN hRegion = reinterpret_cast<HRGN>(::GetPropW(hWnd, kDraggableRegion));
+
+  if (message == WM_LBUTTONDOWN) {
+    if (hRegion) {
+      POINT point = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+      if (::PtInRegion(hRegion, point.x, point.y)) {
+        ::ClientToScreen(hWnd, &point);
+        HWND topLevel = GetTopLevelWindow(hWnd);
+        if (topLevel) {
+          ::PostMessage(topLevel,
+                        WM_NCLBUTTONDOWN,
+                        HTCAPTION,
+                        MAKELPARAM(point.x, point.y));
+        }
+        return 0;
+      }
+    }
+  }
+
+  return CallWindowProc(hParentWndProc, hWnd, message, wParam, lParam);
+}
+
+void SubclassWindow(HWND hWnd, HRGN hRegion) {
+  HANDLE hParentWndProc = ::GetPropW(hWnd, kParentWndProc);
+  if (hParentWndProc) {
+    return;
+  }
+
+  SetLastError(0);
+  LONG_PTR hOldWndProc = SetWindowLongPtr(
+      hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(SubclassedWindowProc));
+  if (hOldWndProc == 0 && GetLastError() != ERROR_SUCCESS) {
+    return;
+  }
+
+  ::SetPropW(hWnd, kParentWndProc, reinterpret_cast<HANDLE>(hOldWndProc));
+  ::SetPropW(hWnd, kDraggableRegion, reinterpret_cast<HANDLE>(hRegion));
+}
+
+void UnSubclassWindow(HWND hWnd) {
+  LONG_PTR hParentWndProc =
+      reinterpret_cast<LONG_PTR>(::GetPropW(hWnd, kParentWndProc));
+  if (hParentWndProc) {
+    LONG_PTR hPreviousWndProc =
+        SetWindowLongPtr(hWnd, GWLP_WNDPROC, hParentWndProc);
+    ALLOW_UNUSED_LOCAL(hPreviousWndProc);
+    DCHECK_EQ(hPreviousWndProc,
+              reinterpret_cast<LONG_PTR>(SubclassedWindowProc));
+  }
+
+  ::RemovePropW(hWnd, kParentWndProc);
+  ::RemovePropW(hWnd, kDraggableRegion);
+}
+
+BOOL CALLBACK SubclassWindowsProc(HWND hwnd, LPARAM lParam) {
+  SubclassWindow(hwnd, reinterpret_cast<HRGN>(lParam));
+  return TRUE;
+}
+
+BOOL CALLBACK UnSubclassWindowsProc(HWND hwnd, LPARAM lParam) {
+  UnSubclassWindow(hwnd);
+  return TRUE;
+}
+
+}  // namespace win_draggable_helper
+#endif  // Q_OS_WIN
 
 namespace client {
-PopupWidget::PopupWidget(RootWindowQt* w, QWidget* parent /*= nullptr*/) :
+DevToolsPopupWidget::DevToolsPopupWidget(RootWindowQt* w, QWidget* parent /*= nullptr*/) :
     QWidget(parent),
     root_win_(w) {
   DCHECK(root_win_);
   this->installEventFilter(this);
 }
 
-void PopupWidget::OnWindowAndBrowserDestoryed() {
+void DevToolsPopupWidget::OnWindowAndBrowserDestoryed() {
   root_win_ = nullptr;
 }
 
-bool PopupWidget::eventFilter(QObject* obj, QEvent* e) {
+bool DevToolsPopupWidget::eventFilter(QObject* obj, QEvent* e) {
   if (root_win_)
     return root_win_->eventFilter(obj, e);
   return QWidget::eventFilter(obj, e);
@@ -40,11 +143,20 @@ bool PopupWidget::eventFilter(QObject* obj, QEvent* e) {
 
 RootWindowQt::RootWindowQt() {
   qDebug() << ">>>> RootWindowQt Ctor";
+
+#ifdef Q_OS_WIN
+  // Create a HRGN representing the draggable window area.
+  draggable_region_ = ::CreateRectRgn(0, 0, 0, 0);
+#endif  // Q_OS_WIN
 }
 
 RootWindowQt::~RootWindowQt() {
   REQUIRE_MAIN_THREAD();
   qDebug() << ">>>> RootWindowQt Dtor";
+
+#ifdef Q_OS_WIN
+  ::DeleteObject(draggable_region_);
+#endif  // Q_OS_WIN
 
   // The window and browser should already have been destroyed.
   DCHECK(window_destroyed_);
@@ -305,8 +417,8 @@ void RootWindowQt::CreateRootWindow(const CefBrowserSettings& settings,
   }
   else {
     // 临时窗口未指定QWidget，需要自动创建
-    // 仅允许DevTools弹窗
-    widget_ = new PopupWidget(this);
+    // 仅DevTools弹窗会运行到此处，其他情况的弹窗均已被取消
+    widget_ = new DevToolsPopupWidget(this);
     widget_->installEventFilter(this);
   }
 
@@ -439,7 +551,7 @@ bool RootWindowQt::OnClose() {
         // JavaScript 'onbeforeunload' event handler allows it.
         browser->GetHost()->CloseBrowser(false);
 
-        // 在非OSR模式下，调用browser->GetHost()->CloseBrowser(false)后，CEF会向顶级窗口发送WM_CLOSE消息
+        // 在非OSR模式下，调用browser->GetHost()->CloseBrowser(false)后，CEF会向顶级窗口发送关闭消息，如WM_CLOSE消息
         // 而在非OSR模式下，则不会发送WM_CLOSE消息，因此在此处模拟发送该消息，保持两种模式下的退出流程一致
         if (with_osr_) {
           QWebViewManager::Get()->privatePointer()->sendCloseEventToTopLevel((QWebView*)widget_.data());
@@ -490,7 +602,7 @@ void RootWindowQt::OnBrowserWindowDestroyed() {
   browser_window_.reset();
 
   // winsoft666: 校准window_destroyed_参数
-  // 在主动关闭窗口或者调用QWidget::close时，由于WM_CLOSE消息可能会被CEF拦截，导致eventFilter无法捕获closeEvent事件，
+  // 在主动关闭窗口或者调用QWidget::close时，由于关闭消息（如WM_CLOSE消息）可能会被CEF拦截，导致eventFilter无法捕获closeEvent事件，
   // 因此在此处通过widget_是否为空来判断QWidget是否已经销毁
   //if (!window_destroyed_) {
   //  if (!widget_)
@@ -549,6 +661,37 @@ void RootWindowQt::OnSetLoadingState(bool isLoading,
 void RootWindowQt::OnSetDraggableRegions(
     const std::vector<CefDraggableRegion>& regions) {
   REQUIRE_MAIN_THREAD();
+
+#ifdef Q_OS_WIN
+  float dpiScale = widget_->devicePixelRatioF();
+
+  // Reset draggable region.
+  ::SetRectRgn(draggable_region_, 0, 0, 0, 0);
+
+  // Determine new draggable region.
+  std::vector<CefDraggableRegion>::const_iterator it = regions.begin();
+  for (; it != regions.end(); ++it) {
+    cef_rect_t rc = it->bounds;
+    rc.x = (float)rc.x * dpiScale;
+    rc.y = (float)rc.y * dpiScale;
+    rc.width = (float)rc.width * dpiScale;
+    rc.height = (float)rc.height * dpiScale;
+    HRGN region =
+        ::CreateRectRgn(rc.x, rc.y, rc.x + rc.width, rc.y + rc.height);
+    ::CombineRgn(draggable_region_,
+                 draggable_region_,
+                 region,
+                 it->draggable ? RGN_OR : RGN_DIFF);
+    ::DeleteObject(region);
+  }
+
+  // Subclass child window procedures in order to do hit-testing.
+  // This will be a no-op, if it is already subclassed.
+  WNDENUMPROC proc =
+      !regions.empty() ? win_draggable_helper::SubclassWindowsProc : win_draggable_helper::UnSubclassWindowsProc;
+  ::EnumChildWindows((HWND)widget_->winId(), proc,
+                     reinterpret_cast<LPARAM>(draggable_region_));
+#endif
 }
 
 void RootWindowQt::NotifyDestroyedIfDone() {
@@ -560,7 +703,7 @@ void RootWindowQt::NotifyDestroyedIfDone() {
   // Notify once both the window and the browser have been destroyed.
   if (window_destroyed_ && browser_destroyed_) {
     if (is_popup_) {
-      PopupWidget* popupWidget = (PopupWidget*)widget_.data();
+      DevToolsPopupWidget* popupWidget = (DevToolsPopupWidget*)widget_.data();
       if (popupWidget)
         popupWidget->OnWindowAndBrowserDestoryed();
     }

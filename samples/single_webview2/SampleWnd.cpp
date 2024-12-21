@@ -10,6 +10,10 @@ SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
 
   connect(webview_, &QWebView::newPopupWindow, this, &SampleWnd::onNewPopupWindow);
 
+  connect(webview_, &QWebView::messageReceived, this, [this](QString message) {
+    QMessageBox::information(this, "Message from JavaSript", message, QMessageBox::Ok);
+  });
+
   connect(webview_, &QWebView::titleChanged, this, [this](QString title) {
     setWindowTitle(title);
   });
@@ -37,7 +41,7 @@ SampleWnd::SampleWnd(QWidget* parent /*= nullptr*/) :
 
   setLayout(v);
 
-  webview_->navigate("https://www.baidu.com");
+  webview_->navigate(QString("file:///%1").arg(QCoreApplication::applicationDirPath() + u8"/asserts/test.html"));
 }
 
 void SampleWnd::closeEvent(QCloseEvent* e) {

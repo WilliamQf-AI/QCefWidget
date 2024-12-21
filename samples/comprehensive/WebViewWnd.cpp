@@ -1,6 +1,7 @@
 ﻿#include "WebViewWnd.h"
 #include "QWebView/Creator.h"
 #include "QWebView/Manager.h"
+#include "PopupWnd.h"
 
 WebViewWnd::WebViewWnd(bool frameless,
                        bool translucentWindowBackground,
@@ -42,6 +43,8 @@ void WebViewWnd::setupUi() {
 
   if (!translucentWindowBackground_)
     webview_->setStyleSheet("image: url(:/Sample/images/logo_blue.svg);");
+
+  connect(webview_, &QWebView::newPopupWindow, this, &WebViewWnd::onNewPopupWindow);
 
   connect(webview_, &QWebView::messageReceived, this, [this](QString message) {
     QMessageBox::information(this, "Message from JavaSript", message, QMessageBox::Ok);
@@ -226,12 +229,11 @@ void WebViewWnd::onNotifyToJs() {
   webview_->postMessage("hi, this is C++ message.");
 }
 
-void WebViewWnd::onPopupWindow(const QString& url) {
-  //WebViewWnd* pPopupWnd = new WebViewWnd(false, false);
-  //pPopupWnd->setInitUrl(url);
-  //pPopupWnd->setupUi();
-  //pPopupWnd->resize(800, 600);
-  //pPopupWnd->show();
+void WebViewWnd::onNewPopupWindow(QString url) {
+  PopupWnd* popupWnd = new PopupWnd(url, engine_);
+
+  popupWnd->resize(800, 600);
+  popupWnd->show();
 }
 
 void WebViewWnd::UpdateWindowTitle() {

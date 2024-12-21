@@ -50,3 +50,7 @@ if (MSVC)
     add_custom_command(TARGET DoubleCEF POST_BUILD
 			COMMAND mt.exe -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\compatibility.manifest\" -inputresource:\"$<TARGET_FILE:DoubleCEF>\" -outputresource:\"$<TARGET_FILE:DoubleCEF>\")
 endif(MSVC)
+
+add_custom_command(TARGET DoubleCEF POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/../asserts" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>/asserts"
+)

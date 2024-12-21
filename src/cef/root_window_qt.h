@@ -19,11 +19,14 @@
 
 namespace client {
 class RootWindowQt;
-class PopupWidget : public QWidget {
+
+// DevTools弹窗
+class DevToolsPopupWidget : public QWidget {
  public:
-  PopupWidget(RootWindowQt* w, QWidget* parent = nullptr);
+  DevToolsPopupWidget(RootWindowQt* w, QWidget* parent = nullptr);
 
   void OnWindowAndBrowserDestoryed();
+
  protected:
   bool eventFilter(QObject* obj, QEvent* e) OVERRIDE;
 
@@ -142,7 +145,12 @@ class RootWindowQt : public RootWindow, public BrowserWindow::Delegate, public Q
   RootWindowQt::Delegate* root_win_qt_delegate_ = nullptr;
   bool force_close_root_win_ = false;
 
-  friend class PopupWidget;
+#ifdef Q_OS_WIN
+  // Draggable region.
+  HRGN draggable_region_ = NULL;
+#endif  // Q_OS_WIN
+
+  friend class DevToolsPopupWidget;
   DISALLOW_COPY_AND_ASSIGN(RootWindowQt);
 };
 }  // namespace client

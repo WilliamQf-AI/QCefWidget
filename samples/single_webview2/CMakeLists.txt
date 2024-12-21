@@ -37,3 +37,7 @@ set_target_properties(SingleWebView2 PROPERTIES
   WIN32_EXECUTABLE TRUE
   VS_DEBUGGER_ENVIRONMENT "PATH=${Qt5_DIR}/../../../bin;%PATH%"
 )
+
+add_custom_command(TARGET SingleWebView2 POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/../asserts" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>/asserts"
+)

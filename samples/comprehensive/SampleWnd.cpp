@@ -102,7 +102,7 @@ void SampleWnd::setupUi() {
 
   checkboxOsrEnabled_ = new QCheckBox("离屏渲染(OSR)");
 
-  checkboxInitHide_ = new QCheckBox("创建隐藏的窗口");
+  checkboxInitHide_ = new QCheckBox("窗口创建后不显示");
 
   QHBoxLayout* hlFPS = new QHBoxLayout();
   hlFPS->addWidget(new QLabel("最大FPS (1 ~ 60，仅OSR模式下可用): "));
@@ -165,9 +165,6 @@ void SampleWnd::setupUi() {
   vlOption->addWidget(pushButtonNewBrowser_);
 
   QHBoxLayout* hlBottom = new QHBoxLayout();
-  labelVersion_ = new QLabel();
-  //labelVersion_->setText(QString("QCefWidget: %1  CEF: %2").arg(QCefWidget::QCefWidgetVersion()).arg(QCefWidget::CefVersion()));
-  hlBottom->addWidget(labelVersion_);
   hlBottom->addStretch();
   pushButtonClose_ = newPushButton("", "调用QWidget::close()方法");
   connect(pushButtonClose_, &QPushButton::clicked, [this]() { close(); });

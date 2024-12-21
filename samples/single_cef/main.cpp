@@ -4,7 +4,7 @@
 #include "QWebView/Manager.h"
 
 int main(int argc, char* argv[]) {
-  if (!InitializeCEF(false))
+  if (!InitializeCEF(true))
     return 0;
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
