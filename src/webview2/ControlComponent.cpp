@@ -65,11 +65,8 @@ ControlComponent::ControlComponent(QWebViewWebView2Impl* d) :
             [this](ICoreWebView2* sender, ICoreWebView2SourceChangedEventArgs* args) -> HRESULT {
                 wil::unique_cotaskmem_string uri;
                 sender->get_Source(&uri);
-                if (wcscmp(uri.get(), L"about:blank") == 0) {
-                    uri = wil::make_cotaskmem_string(L"");
-                }
 
-                // TODO
+                emit d_->GetHostWidget()->urlChanged(QString::fromStdWString(uri.get()));
 
                 return S_OK;
             })

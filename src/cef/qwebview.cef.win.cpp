@@ -76,8 +76,7 @@ bool QWebViewCEF::Initialize(bool supportOSR) {
   // Create the main context object.
   context.reset(new MainContextImpl(
       command_line,
-      true  // 必须为true，因为在MainMessageLoopQt::Quit() 中判断是否需要退出app
-      // todo
+      true  // 必须为true，因为在MainMessageLoopQt::Quit() 中判断是否需要发送allWebViewsClosed信号
       ));
 
   CefSettings settings;
