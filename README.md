@@ -24,11 +24,9 @@ QWebView 对于 CEF 和 Microsoft WebView2 的运行时文件（如 libcef.dll �
 
 无论 CEF 版本及接口如何更新，其官方示例永远都是可以正确运行的。
 
-因此 QWebView 在 CEF 内核实现方面，采用了全新的集成方式，通过直接复用 cefclient 官方示例的代码，仅在其基础上做少量修改，既保证了功能的稳定性，也方便适配不同的 CEF 版本。
+因此 QWebView 在 CEF 内核实现方面，采用了全新的方式，通过直接复用 cefclient 官方示例的代码，仅在其基础上做少量修改，既保证了功能的稳定性，也方便适配不同的 CEF 版本。
 
-由于作者精力有限，目前 QWebView 仅适配了 Windows 32位 74.1.19 版本的 CEF，如需支持其他 CEF（不限于操作系统、CEF版本），只需从 [CEF 官网](https://cef-builds.spotifycdn.com/index.html) 下载对应的 cefclient 示例代码，参考本项目中的修改方式进行修改即可。
-
-欢迎各位有痔之士加入进来，适配更多的 CEF 。
+目前 QWebView 仅适配了 Windows 32位 74.1.19 版本的 CEF，如需支持其他 CEF（不限于操作系统、CEF版本），也不是难事，只需从 [CEF 官网](https://cef-builds.spotifycdn.com/index.html) 下载对应的 cefclient 示例代码，参考本项目中的修改方式进行修改即可。
 
 > 在 dep\cef_binary_74.1.19+gb62bacf+chromium-74.0.3729.157_windows32 目录中搜索“winsoft666: [update-cefclient]” 即可查找所有修改。
 
@@ -36,14 +34,12 @@ QWebView 对于 CEF 和 Microsoft WebView2 的运行时文件（如 libcef.dll �
 
 丰富的示例不仅是为了演示 QWebView 的使用方法，更是为了更好地测试自身的功能。
 
-对于新手建议从 single_cef 或 single_webview2 示例入手，而 comprehensive 示例则是一个综合性的示例，方便测试 QWebView 的所有功能。
+对于新手，建议从 single_cef 或 single_webview2 示例入手，而 comprehensive 示例则是一个综合性的示例，方便测试 QWebView 的所有功能。
+
+![Comprehensive示例截图](./screenshots/Comprehensive.png "Comprehensive示例截图")
 
 ## 注意事项
 
-在使用 QWebView 的程序中，需要调用 [QApplication::setQuitOnLastWindowClosed](https://doc.qt.io/qt-5/qguiapplication.html#quitOnLastWindowClosed-prop) 方法设置当最后一个窗口关闭时，不自动退出 Qt 应用程序。
+在使用 QWebView 的程序中，需要调用 [QApplication::setQuitOnLastWindowClosed](https://doc.qt.io/qt-5/qguiapplication.html#quitOnLastWindowClosed-prop) 方法设置当最后一个窗口关闭时，不自动退出 Qt 应用程序。取而代之的是通过 QWebViewManager::allWebViewsClosed 信号来判断是否需要退出应用程序。
 
-取而代之的是通过 QWebViewManager::allWebViewsClosed 信号来判断是否需要退出应用程序。
-
-对于 QWebView 的宿主窗口，不能设置 Qt::WA_DeleteOnClose 属性。
-
-对于 QWebView 的宿主窗口（顶级窗口），需要额外处理 QCloseEvent 事件，详见示例程序。
+对于 QWebView 的宿主窗口，不能设置 Qt::WA_DeleteOnClose 属性，而且对于 QWebView 的顶级宿主窗口，需要额外处理 QCloseEvent 事件，详见示例程序。
