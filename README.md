@@ -1,45 +1,48 @@
-﻿<h1 align="center">QWebView</h1>
+﻿[[简体中文](README_zh.md)|English]
 
-QWebView 提供了一个 Qt 小部件来显示网页并与网页交互，支持 CEF 和 Microsoft WebView2 浏览器内核。
+<h1 align="center">QWebView</h1>
 
-## 统一接口
+QWebView provides a Qt widget for displaying web pages and interacting with them, and supports the CEF and Microsoft WebView2 browser kernels.
 
-针对两种不同的浏览器内核，QWebView 提供了统一的接口，详见 [QWebView 类](./include/QWebView/Core.h)。
+## Uniform Interface
+For the two different browser kernels, QWebView provides a unified interface. See the [QWebView class](./include/QWebView/Core.h) for details.
 
-- 调用 CreateCEF 方法创建 CEF 内核的 QWebView 对象；
+- Call the CreateCEF method to create a QWebView object with the CEF kernel.
 
-- 调用 CreateWebView2 方法创建 Microsoft WebView2 内核的 QWebView 对象；
+- Call the CreateWebView2 method to create a QWebView object with the Microsoft WebView2 kernel.
 
-## 非强依赖运行时
+## Non-Strong Dependency on Runtime
+QWebView does not strongly depend on the runtime files of CEF and Microsoft WebView2 (such as libcef.dll or EmbeddedBrowserWebView.dll).
 
-QWebView 对于 CEF 和 Microsoft WebView2 的运行时文件（如 libcef.dll 或 EmbeddedBrowserWebView.dll）不是强依赖的。
+Based on this feature, we can dynamically switch the browser kernel according to the actual running environment of the software. For example, if the Microsoft WebView2 runtime is detected as installed on the user's system, the software will use the WebView2 kernel; otherwise, it will choose to download the CEF runtime or the Microsoft WebView2 runtime.
 
-基于该特性，我们可以根据软件的实际运行环境来动态地切换浏览器内核，例如检测到用户系统上已安装 Microsoft WebView2 运行时，则软件使用 WebView2 内核，否则选择下载 CEF 运行时 或 Microsoft WebView2 运行时。
+See the [dynamic_engine](./samples/dynamic_engine) example for details.
 
-详见 [dynamic_engine](./samples/dynamic_engine) 示例。
+## New CEF Integration Method
+This repository was originally named QCefWidget (currently located in the [QCefWidget branch](https://github.com/winsoft666/QCefWidget/tree/QCefWidget)). 
 
-## 全新的CEF集成方式
+The original project only supported the CEF kernel, and in terms of implementation, it adopted the approach of implementing all CEF interfaces by itself. This approach may seem elegant, but it involves a large amount of work and has poor flexibility. Especially when adapting to different CEF versions, a large number of judgments and special treatments need to be done using precompiled macros.
 
-本仓库原名 QCefWidget（目前位于 [QCefWidget 分支](https://github.com/winsoft666/QCefWidget/tree/QCefWidget)），原项目仅支持 CEF 内核，而且在实现方式上采用全部自己实现 CEF 接口的方式，这种方式看似优雅，但工作量很大，而且灵活性欠佳，特别在适配不同 CEF 版本时，需要使用预编译宏做大量的判断和特殊处理。
+**No matter how the CEF version and its interfaces are updated, its official examples can always run correctly.**
 
-无论 CEF 版本及接口如何更新，其官方示例永远都是可以正确运行的。
+Therefore, in terms of the implementation of the CEF kernel, QWebView adopts a new approach by directly reusing the code of the cefclient official example, with only a few modifications on that basis. This ensures the stability of functions and facilitates adaptation to different CEF versions.
 
-因此 QWebView 在 CEF 内核实现方面，采用了全新的方式，通过直接复用 cefclient 官方示例的代码，仅在其基础上做少量修改，既保证了功能的稳定性，也方便适配不同的 CEF 版本。
+Currently, QWebView is only adapted to the Windows 32-bit version 74.1.19 of CEF. If it is necessary to support other CEF versions (not limited to operating systems and CEF versions), it is not difficult. Just download the corresponding cefclient example code from the [CEF official website](https://cef-builds.spotifycdn.com/index.html) and modify it by referring to the modification methods in this project.
 
-目前 QWebView 仅适配了 Windows 32位 74.1.19 版本的 CEF，如需支持其他 CEF（不限于操作系统、CEF版本），也不是难事，只需从 [CEF 官网](https://cef-builds.spotifycdn.com/index.html) 下载对应的 cefclient 示例代码，参考本项目中的修改方式进行修改即可。
+> Search for "winsoft666: [update-cefclient]" in the dep\cef_binary_74.1.19+gb62bacf+chromium-74.0.3729.157_windows32 directory to find all modifications.
 
-> 在 dep\cef_binary_74.1.19+gb62bacf+chromium-74.0.3729.157_windows32 目录中搜索“winsoft666: [update-cefclient]” 即可查找所有修改。
+## Rich Examples
+The abundant examples are not only for demonstrating the usage of QWebView but also for better testing its own functions.
 
-## 丰富的示例
+For beginners, it is recommended to start with the single_cef or single_webview2 examples, and the comprehensive example is a comprehensive one, which is convenient for testing all functions of QWebView.
 
-丰富的示例不仅是为了演示 QWebView 的使用方法，更是为了更好地测试自身的功能。
+![Screenshot of the Comprehensive Example](./screenshots/Comprehensive.png "Screenshot of the Comprehensive Example")
 
-对于新手，建议从 single_cef 或 single_webview2 示例入手，而 comprehensive 示例则是一个综合性的示例，方便测试 QWebView 的所有功能。
+## Precautions
+In programs using QWebView, it is necessary to call the `QApplication::setQuitOnLastWindowClosed` method to set that the Qt application will not automatically exit when the last window is closed. 
 
-![Comprehensive示例截图](./screenshots/Comprehensive.png "Comprehensive示例截图")
+Use the `QWebViewManager::allWebViewsClosed` signal to determine whether to exit the application.
 
-## 注意事项
+For the host window of QWebView, the `Qt::WA_DeleteOnClose` attribute cannot be set, and for the top-level host window of QWebView, additional processing of the QCloseEvent event is required. 
 
-在使用 QWebView 的程序中，需要调用 [QApplication::setQuitOnLastWindowClosed](https://doc.qt.io/qt-5/qguiapplication.html#quitOnLastWindowClosed-prop) 方法设置当最后一个窗口关闭时，不自动退出 Qt 应用程序。取而代之的是通过 QWebViewManager::allWebViewsClosed 信号来判断是否需要退出应用程序。
-
-对于 QWebView 的宿主窗口，不能设置 Qt::WA_DeleteOnClose 属性，而且对于 QWebView 的顶级宿主窗口，需要额外处理 QCloseEvent 事件，详见示例程序。
+See the example program for details.
