@@ -25,7 +25,9 @@
 class QWebViewManagerPrivate;
 
 
-// 虽然WebView2内核在关闭时无需特殊的处理流程，但为了使WebView2和CEF有相同的使用流程，仍然统一使用QWebViewManager进行管理
+// Although the WebView2 kernel doesn't necessitate a specific shutdown procedure, 
+// to ensure that the usage processes of WebView2 and CEF are identical, 
+// they are still managed uniformly through QWebViewManager.
 //
 class QWEBVIEW_MANAGER_EXPORT QWebViewManager : public QObject {
   Q_OBJECT
@@ -33,7 +35,7 @@ class QWEBVIEW_MANAGER_EXPORT QWebViewManager : public QObject {
   enum class TopLevelWndCloseState {
     NotStart = 0,
     BrowsersClosing = 1,
-    BrowsersClosed = 2,  // 所有浏览器已关闭
+    BrowsersClosed = 2,  // All Browsers have closed
     Closed = 3
   };
 

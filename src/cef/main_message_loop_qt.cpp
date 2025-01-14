@@ -13,11 +13,6 @@ int MainMessageLoopQt::Run() {
 }
 
 void MainMessageLoopQt::Quit() {
-  //if (!CURRENTLY_ON_MAIN_THREAD()) {
-  //  MAIN_POST_CLOSURE(base::Bind(&MainMessageLoopQt::Quit, base::Unretained(this)));
-  //  return;
-  //}
-
   QWebViewManager::Get()->privatePointer()->setCefCanUnInitialize();
 }
 

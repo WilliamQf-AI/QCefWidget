@@ -117,11 +117,6 @@ ControlComponent::ControlComponent(QWebViewWebView2Impl* d) :
                     }
                 }
 
-                //emit d_->GetHostWidget()->loadUrlFinished(!!success,
-                //                                          QString::fromStdWString(uri.get()),
-                //                                          isCatastrophic,
-                //                                          QString::fromStdWString(errStatus));
-
                 emit d_->GetHostWidget()->loadStateChanged(false);
                 return S_OK;
             })

@@ -17,8 +17,7 @@ class SampleWnd : public QWidget {
   QSize sizeHint() const override;
  private slots:
   void onPushButtonNewBrowserClicked();
-  void onPushButtonQuickSettingForIrregularWndClicked();
-  void onPushButtonQuickSettingForElectronClicked();
+  void onPushButtonKnownIssueClicked();
   void onWebViewWndClosed();
 
  private:
@@ -41,8 +40,7 @@ class SampleWnd : public QWidget {
 
   QPushButton* pushButtonClose_;
   QPushButton* pushButtonNewBrowser_;
-  QPushButton* pushButtonQuickSettingForIrregularWnd_;
-  QPushButton* pushButtonQuickSettingForElectron_;
+  QPushButton* pushButtonKnownIssue_;
 
   QListWidget* listBrowser_;
 };

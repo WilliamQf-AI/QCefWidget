@@ -30,7 +30,9 @@ bool QWebViewWebView2::QueryWebView2Version(QString& version) {
 QWebViewWebView2::QWebViewWebView2(QWidget* parent) :
     QWebView(parent),
     impl_(new QWebViewWebView2Impl(this)) {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewWebView2 Ctor";
+#endif
   Q_ASSERT(!qApp->quitOnLastWindowClosed());
 
   engine_ = BrowserEngine::WebView2;
@@ -42,7 +44,9 @@ QWebViewWebView2::QWebViewWebView2(QWidget* parent) :
 }
 
 QWebViewWebView2::~QWebViewWebView2() {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewWebView2 Dtor";
+#endif
 }
 
 void QWebViewWebView2::navigate(const QString& url) {

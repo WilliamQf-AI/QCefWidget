@@ -71,9 +71,12 @@ void SampleWnd::setupUi() {
   hlEngine->addWidget(new QLabel("浏览器引擎: "));
   comboBoxEngine_ = new QComboBox();
   comboBoxEngine_->setMinimumWidth(80);
-  comboBoxEngine_->addItem("WebView2", (int)QWebView::BrowserEngine::WebView2);
   comboBoxEngine_->addItem("CEF", (int)QWebView::BrowserEngine::CEF);
+  comboBoxEngine_->addItem("WebView2", (int)QWebView::BrowserEngine::WebView2);
   hlEngine->addWidget(comboBoxEngine_);
+  pushButtonKnownIssue_ = new QPushButton("已知问题");
+  connect(pushButtonKnownIssue_, &QPushButton::clicked, this, &SampleWnd::onPushButtonKnownIssueClicked);
+  hlEngine->addWidget(pushButtonKnownIssue_);
   hlEngine->addStretch();
 
   checkboxFramelessWindow_ = new QCheckBox("无边框窗口");
@@ -138,17 +141,6 @@ void SampleWnd::setupUi() {
   pushButtonNewBrowser_ = newPushButton("pushButtonNewBrowser", "使用上面配置创建新的浏览器窗口");
   connect(pushButtonNewBrowser_, &QPushButton::clicked, this, &SampleWnd::onPushButtonNewBrowserClicked);
 
-  QHBoxLayout* hlQuickSetting = new QHBoxLayout();
-  hlQuickSetting->addWidget(new QLabel("快速设置: "));
-  pushButtonQuickSettingForIrregularWnd_ = newPushButton("", "不规则窗口");
-  connect(pushButtonQuickSettingForIrregularWnd_, &QPushButton::clicked, this, &SampleWnd::onPushButtonQuickSettingForIrregularWndClicked);
-  hlQuickSetting->addWidget(pushButtonQuickSettingForIrregularWnd_);
-
-  pushButtonQuickSettingForElectron_ = newPushButton("", "模拟Electron");
-  connect(pushButtonQuickSettingForElectron_, &QPushButton::clicked, this, &SampleWnd::onPushButtonQuickSettingForElectronClicked);
-  hlQuickSetting->addWidget(pushButtonQuickSettingForElectron_);
-  hlQuickSetting->addStretch();
-
   QVBoxLayout* vlOption = new QVBoxLayout();
   vlOption->addLayout(hlEngine);
   vlOption->addWidget(checkboxInitHide_);
@@ -161,7 +153,6 @@ void SampleWnd::setupUi() {
   vlOption->addLayout(hlWindowBkColor);
   vlOption->addLayout(hlBrowserBkColor);
   vlOption->addLayout(hlInitUrl);
-  vlOption->addLayout(hlQuickSetting);
   vlOption->addWidget(pushButtonNewBrowser_);
 
   QHBoxLayout* hlBottom = new QHBoxLayout();
@@ -231,30 +222,11 @@ void SampleWnd::onPushButtonNewBrowserClicked() {
     wmd->show();
 }
 
-void SampleWnd::onPushButtonQuickSettingForIrregularWndClicked() {
-  checkboxOsrEnabled_->setChecked(true);
-  checkboxFramelessWindow_->setChecked(true);
-  checkboxTranslucentWindowBackground_->setChecked(true);
-  QString old = lineEditWindowBkColor_->text();
-  QString newSetting = "0.255.255.255";
-  if (old.indexOf(",") != -1) {
-    newSetting = "0" + old.mid(old.indexOf(","));
-  }
-  lineEditWindowBkColor_->setText(newSetting);
-
-  old = lineEditBrowserBkColor_->text();
-  newSetting = "0.255.255.255";
-  if (old.indexOf(",") != -1) {
-    newSetting = "0" + old.mid(old.indexOf(","));
-  }
-  lineEditBrowserBkColor_->setText(newSetting);
-
-  comboBoxUrl_->lineEdit()->setText("http://qcefwidget/tree.html");
-}
-
-void SampleWnd::onPushButtonQuickSettingForElectronClicked() {
-  checkboxFramelessWindow_->setChecked(true);
-  comboBoxUrl_->lineEdit()->setText("http://qcefwidget/test.html");
+void SampleWnd::onPushButtonKnownIssueClicked() {
+  QMessageBox::information(this,
+                           "已知问题",
+                           "由于 WebView2 使用了与 CEF 相同的窗口类名规则（Chrome_WidgetWin_*），因此在创建 WebView2 之后，再创建 CEF 会导致 CreateWindowEx 失败。\n"
+                           "详见：https://chromium.googlesource.com/chromium/src.git/+/refs/tags/74.0.3729.157/ui/gfx/win/window_impl.cc");
 }
 
 void SampleWnd::onWebViewWndClosed() {

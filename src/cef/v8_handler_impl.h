@@ -14,15 +14,15 @@
 
 namespace client {
 namespace renderer {
-// 渲染进程：在Window对象上注册IsCEFEngine值
+// Rendering process: Register the value of IsCEFEngine on the Window object.
 void RegisterCEFEngineFlag(CefRefPtr<CefV8Context> context, CefRefPtr<ClientAppRenderer::Delegate> delegate);
 
-// 渲染进程：在Window对象上注册JS通知函数
+// Rendering process: Register a JavaScript notification function on the Window object.
 void RegisterJSNotifyFunction(CefRefPtr<CefV8Context> context,
                               CefRefPtr<ClientAppRenderer::Delegate> delegate);
 }  // namespace renderer
 
-// 浏览器进程：处理发送到浏览器进程的消息
+// Browser process: Handle messages sent to the browser process.
 bool HandleProcessMessage(CefRefPtr<CefBrowser> browser, CefRefPtr<CefProcessMessage> message);
 }  // namespace client
 

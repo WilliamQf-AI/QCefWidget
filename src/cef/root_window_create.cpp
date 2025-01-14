@@ -12,7 +12,7 @@
 
 namespace client {
 // static
-// winsoft666: 实现browser/root_window.h中的RootWindow::Create方法，创建RootWindowQt窗口
+// winsoft666: Implement the RootWindow::Create method in browser/root_window.h to create the RootWindowQt window.
 //
 scoped_refptr<RootWindow> RootWindow::Create(bool use_views) {
   if (use_views) {

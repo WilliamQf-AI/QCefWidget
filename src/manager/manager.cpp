@@ -32,11 +32,15 @@ QWebViewManagerPrivate* QWebViewManager::privatePointer() {
 QWebViewManager::QWebViewManager(QObject* parent /*= Q_NULLPTR*/) :
     QObject(parent),
     d_(new QWebViewManagerPrivate()) {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewManager Ctor";
+#endif
 }
 
 QWebViewManager::~QWebViewManager() {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewManager Dtor";
+#endif
 }
 
 void QWebViewManager::prepareToCloseTopLevelWindow(QWidget* topLevel) {

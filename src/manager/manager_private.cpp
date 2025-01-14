@@ -53,7 +53,9 @@ void QWebViewManagerPrivate::remove(QWebView* webview) {
 }
 
 void QWebViewManagerPrivate::prepareToCloseTopLevelWindow(QWidget* topLevel) {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewManagerPrivate::prepareToCloseTopLevelWindow" << topLevel;
+#endif
 
   if (topLevelDataMap_.contains(topLevel)) {
     if (topLevelDataMap_[topLevel].CloseState == QWebViewManager::TopLevelWndCloseState::NotStart) {
@@ -64,7 +66,9 @@ void QWebViewManagerPrivate::prepareToCloseTopLevelWindow(QWidget* topLevel) {
         if (!it->BrowserClosed) {
           Q_ASSERT(it->WebView);
           if (it->WebView->browserEngine() == QWebView::BrowserEngine::CEF) {
+#ifdef QT_DEBUG
             qDebug() << ">>>>     Call QWidget:close()" << it->WebView;
+#endif
             QWidget* w = it->WebView;
             QTimer::singleShot(1, [w]() {
               w->close();
@@ -72,10 +76,11 @@ void QWebViewManagerPrivate::prepareToCloseTopLevelWindow(QWidget* topLevel) {
           }
           else if (it->WebView->browserEngine() == QWebView::BrowserEngine::WebView2) {
             QWebView* webview = it->WebView;
-            webview->close(); // 在CloseEvent事件中做一些清理操作
+            webview->close();  // Do some cleaning in the CloseEvent handling function.
             it->BrowserClosed = true;
 
-            // WebView2 不会给顶级窗口发送 WM_CLOSE 消息，为了保持和 CEF 流程一直，模拟发送 CloseEvent 到顶级窗口
+            // WebView2 will not send a Close message (such as WM_CLOSE) to the top-level window.
+            // In order to keep consistent with the CEF process, a CloseEvent will be simulated and sent to the top-level window.
             QTimer::singleShot(1, [topLevel, webview, this]() {
               topLevel->close();
               setWebViewClosed(topLevel, webview);
@@ -91,13 +96,15 @@ void QWebViewManagerPrivate::prepareToCloseTopLevelWindow(QWidget* topLevel) {
 }
 
 void QWebViewManagerPrivate::setWebViewClosed(QWidget* topLevel, QWebView* webview) {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewManagerPrivate::setCefWebViewClosed" << webview;
+#endif
 
   if (!topLevel)
     topLevel = GetTopLevelWindow(webview);
   Q_ASSERT(topLevel);
 
-  // CEF的Popup窗口不在其中
+  // The Popup window of CEF is not included.
   if (topLevelDataMap_.contains(topLevel)) {
     auto& coll = topLevelDataMap_[topLevel].WebviewColl;
     for (QVector<WebViewData>::iterator it = coll.begin(); it != coll.end(); ++it) {
@@ -120,7 +127,9 @@ void QWebViewManagerPrivate::sendCloseEventToTopLevel(QWebView* webview) {
 }
 
 void QWebViewManagerPrivate::checkBrowsersCloseState(QWidget* topLevel) {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewManager::checkBrowsersCloseState" << topLevel;
+#endif
 
   if (topLevelDataMap_.contains(topLevel)) {
     auto& coll = topLevelDataMap_[topLevel].WebviewColl;
@@ -134,7 +143,9 @@ void QWebViewManagerPrivate::checkBrowsersCloseState(QWidget* topLevel) {
     }
 
     if (isAllClosed) {
+#ifdef QT_DEBUG
       qDebug() << ">>>>    All Browsers Closed";
+#endif
       topLevelDataMap_[topLevel].CloseState = QWebViewManager::TopLevelWndCloseState::BrowsersClosed;
     }
   }

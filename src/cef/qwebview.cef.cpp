@@ -69,9 +69,6 @@ class QWebViewCEF::Impl : public QObject, public RootWindowQt::Delegate {
     if (rootWindow_)
       return;
 
-    // 延后安装事件过滤器，防止QWebView控件还未加入到布局中，查找不到其父窗口
-    //TopLevelEventFilter::Get()->setFilterWebViewEvent(parent_);
-
     MainContext* context = MainContext::Get();
     DCHECK(context);
     if (context) {
@@ -117,7 +114,6 @@ class QWebViewCEF::Impl : public QObject, public RootWindowQt::Delegate {
   }
 
   void OnWindowDestoryed() override {
-    //rootWindow_ = nullptr;
   }
 
   void OnWindowAndBrowserDestoryed() override {
@@ -128,20 +124,27 @@ class QWebViewCEF::Impl : public QObject, public RootWindowQt::Delegate {
  private:
   bool osr_ = false;
   QWebViewCEF* parent_ = nullptr;
-  RootWindow* rootWindow_ = nullptr;  // 使用裸指针，不使用 scoped_refptr<RootWindow>，避免引用计数导致无法在RootWindowManager中释放
+
+  // Use raw pointers instead of scoped_refptr<RootWindow> to avoid issues
+  //   where the RootWindow cannot be released in the RootWindowManager due to reference counting.
+  RootWindow* rootWindow_ = nullptr;
 };
 
 QWebViewCEF::QWebViewCEF(QWidget* parent) :
     QWebView(parent),
     impl_(new Impl(this)) {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewCEF Ctor";
+#endif
   DCHECK(!qApp->quitOnLastWindowClosed());
 
   engine_ = BrowserEngine::CEF;
 }
 
 QWebViewCEF::~QWebViewCEF() {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewCEF Dtor";
+#endif
 }
 
 void QWebViewCEF::navigate(const QString& url) {

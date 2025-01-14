@@ -22,11 +22,11 @@
 #endif
 #endif
 
-//
-// CEF 使用了老式的 Windows 系统版本获取函数，这些函数在 Windows 8.1+ 系统上会始终返回 Windows 8 版本 (6.2)。
-// 详见：https://learn.microsoft.com/zh-cn/windows/win32/sysinfo/targeting-your-application-at-windows-8-1
-//
-// 这样会导致 CEF 触发断言而崩溃，因此需要在可执行文件中嵌入.manifest清单（见Sample.manifest），兼容Windows 8.1及以上版本的系统。
+
+// Since CEF uses old Windows system version acquisition API, these API will always return the Windows 8 version (6.2) on Windows 8.1+ systems.
+// For more details, please refer to: https://learn.microsoft.com/zh-cn/windows/win32/sysinfo/targeting-your-application-at-windows-8-1
+// This will cause CEF to trigger assertions and crash.
+// Therefore, it is necessary to embed a .manifest file (see compatibility.manifest) in the executable file to be compatible with systems of Windows 8.1 and above.
 //
 class QWEBVIEW_CEF_EXPORT QWebViewCEF : public QWebView {
   Q_OBJECT

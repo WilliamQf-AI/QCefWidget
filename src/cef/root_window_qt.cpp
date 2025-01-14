@@ -142,7 +142,9 @@ bool DevToolsPopupWidget::eventFilter(QObject* obj, QEvent* e) {
 }
 
 RootWindowQt::RootWindowQt() {
+#ifdef QT_DEBUG
   qDebug() << ">>>> RootWindowQt Ctor";
+#endif
 
 #ifdef Q_OS_WIN
   // Create a HRGN representing the draggable window area.
@@ -152,7 +154,9 @@ RootWindowQt::RootWindowQt() {
 
 RootWindowQt::~RootWindowQt() {
   REQUIRE_MAIN_THREAD();
+#ifdef QT_DEBUG
   qDebug() << ">>>> RootWindowQt Dtor";
+#endif
 
 #ifdef Q_OS_WIN
   ::DeleteObject(draggable_region_);
@@ -254,19 +258,18 @@ void RootWindowQt::SetBounds(int x, int y, size_t width, size_t height) {
 
 void RootWindowQt::Close(bool force) {
   REQUIRE_MAIN_THREAD();
+#ifdef QT_DEBUG
   qDebug() << ">>>> RootWindowQt::Close, force:" << force;
+#endif
 
   if (widget_) {
-    // force参数的意思是直接销毁窗口，不在WM_CLOSE或closeEvent中执行浏览器关闭操作
-    // 在调用close()函数之后，直接标记为窗口已经销毁 window_destroyed_=true
+    // The meaning of the force parameter is to directly destroy the window without performing browser closing operations in WM_CLOSE or closeEvent.
+    // After calling the QWidget::close() function, directly mark the window as already destroyed, i.e., window_destroyed_ = true.
     force_close_root_win_ = force;
+#ifdef QT_DEBUG
     qDebug() << ">>>>     Call QWidget::close()" << widget_;
+#endif
     widget_->close();
-
-    //if (!force) {
-    //  LOG(INFO) << ">>>> QWebView::close()" << force;
-    //  widget_->close();
-    //}
   }
 
   window_destroyed_ = true;
@@ -372,13 +375,19 @@ bool RootWindowQt::eventFilter(QObject* obj, QEvent* e) {
     OnMove();
   }
   else if (event_type == QEvent::Close) {
+#ifdef QT_DEBUG
     qDebug() << ">>>> Recv QWebView QEvent::Close";
+#endif
 
     if (OnClose()) {
+#ifdef QT_DEBUG
       qDebug() << ">>>> QWebView Cancel close";
+#endif
       return true;  // Cancel close
     }
+#ifdef QT_DEBUG
     qDebug() << ">>>> QWebView allow close";
+#endif
   }
 
   // standard event processing
@@ -416,8 +425,8 @@ void RootWindowQt::CreateRootWindow(const CefBrowserSettings& settings,
     widget_->installEventFilter(this);
   }
   else {
-    // 临时窗口未指定QWidget，需要自动创建
-    // 仅DevTools弹窗会运行到此处，其他情况的弹窗均已被取消
+    // The temporary window does not have a specified QWidget and needs to be created automatically.
+    // Only the DevTools popup window will reach this point, and other popup window have already been cancelled.
     widget_ = new DevToolsPopupWidget(this);
     widget_->installEventFilter(this);
   }
@@ -542,7 +551,9 @@ bool RootWindowQt::OnClose() {
     if (browser_window_ && !browser_window_->IsClosing()) {
       CefRefPtr<CefBrowser> browser = GetBrowser();
       if (browser) {
+#ifdef QT_DEBUG
         qDebug() << ">>>> Call GetHost()->CloseBrowser(false)";
+#endif
 
         QWebViewManager::Get()->privatePointer()->setWebViewClosed(nullptr, (QWebView*)widget_.data());
 
@@ -551,8 +562,11 @@ bool RootWindowQt::OnClose() {
         // JavaScript 'onbeforeunload' event handler allows it.
         browser->GetHost()->CloseBrowser(false);
 
-        // 在非OSR模式下，调用browser->GetHost()->CloseBrowser(false)后，CEF会向顶级窗口发送关闭消息，如WM_CLOSE消息
-        // 而在非OSR模式下，则不会发送WM_CLOSE消息，因此在此处模拟发送该消息，保持两种模式下的退出流程一致
+        // In non-OSR mode, after calling browser->GetHost()->CloseBrowser(false),
+        // CEF will send a closing message to the top-level window, such as the WM_CLOSE message.
+        //
+        // However, in non-OSR mode, the WM_CLOSE message will not be sent.
+        // Therefore, this message is simulated here to maintain consistent exit procedures in both modes.
         if (with_osr_) {
           QWebViewManager::Get()->privatePointer()->sendCloseEventToTopLevel((QWebView*)widget_.data());
         }
@@ -597,24 +611,17 @@ void RootWindowQt::OnBrowserCreated(CefRefPtr<CefBrowser> browser) {
 
 void RootWindowQt::OnBrowserWindowDestroyed() {
   REQUIRE_MAIN_THREAD();
+#ifdef QT_DEBUG
   qDebug() << ">>>> RootWindowQt::OnBrowserWindowDestroyed";
+#endif
 
   browser_window_.reset();
-
-  // winsoft666: 校准window_destroyed_参数
-  // 在主动关闭窗口或者调用QWidget::close时，由于关闭消息（如WM_CLOSE消息）可能会被CEF拦截，导致eventFilter无法捕获closeEvent事件，
-  // 因此在此处通过widget_是否为空来判断QWidget是否已经销毁
-  //if (!window_destroyed_) {
-  //  if (!widget_)
-  //    window_destroyed_ = true;
-  //}
 
   if (!window_destroyed_) {
     // The browser was destroyed first. This could be due to the use of
     // off-screen rendering or execution of JavaScript window.close().
     // Close the RootWindow.
     Close(true);
-    //window_destroyed_ = true;
   }
 
   browser_destroyed_ = true;
@@ -695,11 +702,6 @@ void RootWindowQt::OnSetDraggableRegions(
 }
 
 void RootWindowQt::NotifyDestroyedIfDone() {
-  //if (window_destroyed_ && root_win_qt_delegate_) {
-  //  qDebug() << ">>>> Notify Window destoryed";
-  //  root_win_qt_delegate_->OnWindowDestoryed();
-  //}
-
   // Notify once both the window and the browser have been destroyed.
   if (window_destroyed_ && browser_destroyed_) {
     if (is_popup_) {
@@ -709,12 +711,18 @@ void RootWindowQt::NotifyDestroyedIfDone() {
     }
 
     if (root_win_qt_delegate_) {
+#ifdef QT_DEBUG
       qDebug() << ">>>> Notify Browser/Window all destoryed";
+#endif
       root_win_qt_delegate_->OnWindowAndBrowserDestoryed();
     }
 
+#ifdef QT_DEBUG
     qDebug() << ">>>> OnRootWindowDestroyed";
-    delegate_->OnRootWindowDestroyed(this);  // 调用该语句会使当前RootWindowQt对象被销毁
+#endif
+
+    // Note: Calling this statement will cause the current RootWindowQt object to be destroyed.
+    delegate_->OnRootWindowDestroyed(this);
   }
 }
 

@@ -20,7 +20,7 @@
 namespace client {
 class RootWindowQt;
 
-// DevTools弹窗
+// DevTools Popup Window
 class DevToolsPopupWidget : public QWidget {
  public:
   DevToolsPopupWidget(RootWindowQt* w, QWidget* parent = nullptr);
@@ -141,7 +141,9 @@ class RootWindowQt : public RootWindow, public BrowserWindow::Delegate, public Q
   bool window_destroyed_ = false;
   bool browser_destroyed_ = false;
 
-  std::string one_time_url_;  // 一次性URL，记录在Browser创建之前用户设置的URL，延后到Browser创建后设置该URL
+  // The one-time URL is used to record the URL set by the user before the Browser is created. 
+  // This recorded URL will not be utilized until after the Browser has been successfully created.
+  std::string one_time_url_;
   RootWindowQt::Delegate* root_win_qt_delegate_ = nullptr;
   bool force_close_root_win_ = false;
 

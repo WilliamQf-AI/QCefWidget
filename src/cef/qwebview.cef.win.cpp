@@ -76,8 +76,10 @@ bool QWebViewCEF::Initialize(bool supportOSR) {
   // Create the main context object.
   context.reset(new MainContextImpl(
       command_line,
-      true  // 必须为true，因为在MainMessageLoopQt::Quit() 中判断是否需要发送allWebViewsClosed信号
-      ));
+      // winsoft666:
+      // terminate_when_all_windows_closed must be set to true because within MainMessageLoopQt::Quit(),
+      // a determination is made as to whether the allWebViewsClosed signal needs to be sent.
+      true));
 
   CefSettings settings;
 
@@ -91,16 +93,18 @@ bool QWebViewCEF::Initialize(bool supportOSR) {
   if (supportOSR)
     settings.windowless_rendering_enabled = true;
 
-  // winsoft666: CEF线程模型
+  // winsoft666: CEF Thread Model
   //
-  // 当 multi_threaded_message_loop = 0 时，CEF的UI线程与程序的主线程为一个线程，
-  //     此时可以直接调用 CefRunMessageLoop 函数，该函数为阻塞的消息循环函数，用于处理程序消息和CEF消息，可以代替程序的消息循环；
-  //     也可以单独实现程序的消息循环，并在程序消息循环中额外调用非阻塞的 CefDoMessageLoopWork 函数来处理CEF消息。
+  // When multi_threaded_message_loop = 0,
+  //   the CEF UI thread is the same as the main thread of the program.
+  //   In this case, you can directly call the CefRunMessageLoop function. This is a blocking message loop function used to handle both program messages and CEF messages, and it can replace the program's message loop.
+  //   Alternatively, you can implement the program's message loop separately and additionally call the non-blocking CefDoMessageLoopWork function within the program's message loop to handle CEF messages.
   //
-  // 当 multi_threaded_message_loop = 1 时，CEF的UI线程与程序主线程为不同的线程，
+  // When multi_threaded_message_loop = 1,
+  //   the CEF UI thread is different from the main thread of the program.
   //
-  // 可以使用 CefCurrentlyOn(TID_UI) 判断当前线程是否为CEF的UI线程，并使用 CefPostTask(TID_UI, ...)  将闭合体发送到CEF UI线程中执行。
-  // 可以使用 CURRENTLY_ON_MAIN_THREAD() 判断当前线程是否为主线程，并使用 MAIN_POST_CLOSURE 或 MAIN_POST_TASK 将闭合体/任务发送到主线程中执行。
+  //   You can use CefCurrentlyOn(TID_UI) to determine whether the current thread is the CEF UI thread, and use CefPostTask(TID_UI,...) to send a closure to the CEF UI thread for execution.
+  //   You can use CURRENTLY_ON_MAIN_THREAD() to determine whether the current thread is the main thread, and use MAIN_POST_CLOSURE or MAIN_POST_TASK to send a closure/task to the main thread for execution.
   //
   settings.multi_threaded_message_loop = 1;
 
@@ -116,7 +120,9 @@ bool QWebViewCEF::Initialize(bool supportOSR) {
 }
 
 void QWebViewCEF::UnInitialize() {
+#ifdef QT_DEBUG
   qDebug() << ">>>> QWebViewCEF::UnInitialize";
+#endif
 
   // Shut down CEF.
   context->Shutdown();

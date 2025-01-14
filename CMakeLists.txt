@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(QWebView
-  VERSION 2.0.1
+  VERSION 2.0.2
   LANGUAGES CXX
 )
 
