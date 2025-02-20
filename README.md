@@ -46,3 +46,8 @@ Use the `QWebViewManager::allWebViewsClosed` signal to determine whether to exit
 For the host window of QWebView, the `Qt::WA_DeleteOnClose` attribute cannot be set, and for the top-level host window of QWebView, additional processing of the QCloseEvent event is required. 
 
 See the example program for details.
+
+## Sponsor
+Thank you for using this project. It would be a great pleasure for me if this project can be of help to you.
+
+**You can go to my Github [homepage](https://github.com/winsoft666) to make a donation.**

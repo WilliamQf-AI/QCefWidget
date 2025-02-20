@@ -45,3 +45,9 @@ QWebView 对于 CEF 和 Microsoft WebView2 的运行时文件（如 libcef.dll �
 在使用 QWebView 的程序中，需要调用 [QApplication::setQuitOnLastWindowClosed](https://doc.qt.io/qt-5/qguiapplication.html#quitOnLastWindowClosed-prop) 方法设置当最后一个窗口关闭时，不自动退出 Qt 应用程序。取而代之的是通过 QWebViewManager::allWebViewsClosed 信号来判断是否需要退出应用程序。
 
 对于 QWebView 的宿主窗口，不能设置 Qt::WA_DeleteOnClose 属性，而且对于 QWebView 的顶级宿主窗口，需要额外处理 QCloseEvent 事件，详见示例程序。
+
+## 赞助
+
+感谢您能使用本项目，如果这个项目能对您产生帮助，对我而言也是一件非常开心的事情。
+
+**可以前往我的 Github [主页](https://github.com/winsoft666) 进行打赏。**
